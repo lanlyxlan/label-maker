@@ -55,7 +55,6 @@
 
         h3 { margin-top: 0; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; display: inline-block; }
         
-        /* เปลี่ยนโครงสร้างคลาสของช่องกรอกข้อมูลให้จัดการง่ายขึ้น */
         .input-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
         .input-group { display: flex; flex-direction: column; }
         .date-input { flex: 2; }
@@ -133,12 +132,10 @@
             letter-spacing: -0.2px; 
         }
 
-        /* --- การตั้งค่าสำหรับเปิดในหน้าจอมือถือ (Responsive) --- */
         @media (max-width: 768px) {
             body { flex-direction: column; overflow-y: auto; height: auto; }
             .sidebar { width: 100%; min-width: auto; height: auto; border-right: none; border-bottom: 2px solid #ddd; padding: 15px; box-shadow: none; position: relative; z-index: 10; }
             
-            /* แก้ไขตรงนี้: จับช่องวันที่กับจำนวนให้เรียงบน-ล่าง จะได้ไม่เบียดกัน */
             .input-row { flex-direction: column; align-items: stretch; gap: 12px; }
             .date-input, .qty-input { flex: none; width: 100%; }
             
