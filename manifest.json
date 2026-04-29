@@ -1,0 +1,15 @@
+{
+  "name": "Label Maker App",
+  "short_name": "LabelMaker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#24A0ED",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2874/2874068.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

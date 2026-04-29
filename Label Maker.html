@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Label Maker V.2 (Full & Mobile Ready)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <style>
+        body { 
+            font-family: sans-serif; 
+            margin: 0;
+            padding: 0;
+            display: flex;
+            height: 100vh; 
+            background-color: #ffffff; 
+            overflow: hidden; 
+        }
+
+        .sidebar {
+            width: 350px;
+            min-width: 320px;
+            height: 100%;
+            background-color: #ffffff;
+            border-right: 1px solid #e0e0e0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            padding: 25px;
+            box-sizing: border-box;
+            overflow-y: auto; 
+            z-index: 10;
+        }
+
+        .preview-area {
+            flex: 1;
+            height: 100%;
+            background-color: #f4f6f9; 
+            padding: 40px 20px;
+            box-sizing: border-box;
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h3 { margin-top: 0; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; display: inline-block; }
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: flex-end; }
+        .input-group { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #555; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; font-family: 'Sarabun', sans-serif; font-size: 14px;}
+        
+        .btn { border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-size: 14px; font-weight: bold; transition: 0.2s; }
+        .btn-add { background: #007bff; color: white; height: 35px; }
+        .btn-add:hover { background: #0056b3; }
+        
+        .btn-generate { background: #28a745; color: white; font-size: 15px; width: 100%; margin-top: 15px; padding: 12px; box-shadow: 0 4px 6px rgba(40,167,69,0.2); }
+        .btn-generate:hover { background: #218838; transform: translateY(-1px); }
+
+        .btn-clear { background: #dc3545; color: white; padding: 5px 10px; font-size: 12px; float: right; border: none; border-radius: 4px; cursor: pointer; }
+        .btn-clear:hover { background: #c82333; }
+        
+        .action-row { display: flex; flex-direction: row; gap: 10px; margin-top: 20px; }
+        .btn-export { flex: 1; display: none; background: #6c757d; color: white; padding: 10px; text-align: center; }
+        .btn-export.show { display: block; }
+        .btn-pdf { background: #e83e8c; }
+
+        .list-container { background: #fafafa; border: 1px solid #eee; border-radius: 6px; padding: 15px; margin-top: 20px; min-height: 100px; }
+        
+        .list-item { 
+            font-size: 13px; border-bottom: 1px dashed #ddd; padding: 8px 0; color: #444; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .item-text { flex: 1; font-family: 'Sarabun', sans-serif; }
+        .item-actions { display: flex; gap: 5px; }
+        .btn-small { padding: 4px 8px; font-size: 11px; border: none; border-radius: 3px; cursor: pointer; font-weight: bold; }
+        .btn-edit { background: #ffc107; color: #000; }
+        .btn-delete { background: #dc3545; color: white; }
+
+        .page {
+            width: 200mm; 
+            height: 288mm; 
+            background: white;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); 
+            box-sizing: border-box;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            flex-shrink: 0; 
+        }
+        
+        .label {
+            font-family: 'Sarabun', sans-serif; 
+            width: 20mm;
+            height: 9mm;
+            border: 0.1mm solid rgb(223, 223, 223); 
+            box-sizing: border-box;
+            padding-top: 1.2mm; 
+            padding-left: 1.5mm; 
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; 
+            line-height: 1;
+            color: black;
+            overflow: hidden;
+            background: white;
+        }
+        
+        .exp-text {
+            font-size: 6.5pt; 
+            margin-bottom: 1.5px; 
+            font-weight: 500;
+        }
+
+        .date-text { 
+            font-weight: 400; 
+            font-size: 11pt;
+            margin-bottom: 1.5px; 
+            letter-spacing: -0.2px; 
+        }
+
+        /* --- การตั้งค่าสำหรับเปิดในหน้าจอมือถือ (Responsive) --- */
+        @media (max-width: 768px) {
+            body { flex-direction: column; overflow-y: auto; height: auto; }
+            .sidebar { width: 100%; min-width: auto; height: auto; border-right: none; border-bottom: 2px solid #ddd; padding: 15px; box-shadow: none; position: relative; z-index: 10; }
+            .preview-area { overflow-x: auto; padding: 20px 10px; align-items: flex-start; height: auto; min-height: 80vh; }
+            .action-row { flex-direction: column; } /* ให้ปุ่มบันทึกซ้อนกันบนมือถือเพื่อกดง่าย */
+            .page { margin: 0 auto; } /* ให้ตารางอยู่ตรงกลางเสมอเวลาเลื่อนซ้ายขวา */
+        }
+
+        @page { size: A4; margin: 0; }
+        
+        @media print {
+            body { display: block; height: auto; overflow: visible; background: white; }
+            .sidebar { display: none; } 
+            .preview-area { 
+                display: block; 
+                padding: 0; 
+                background: none; 
+                overflow: visible;
+            }
+            .page { 
+                box-shadow: none; 
+                margin: 0 auto !important; 
+                margin-top: 4.5mm !important; 
+                margin-bottom: 4.5mm !important; 
+                page-break-after: always; 
+                break-after: page; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h3>Label Maker</h3> 
+        
+        <div class="input-row">
+            <div class="input-group" style="flex: 2;">
+                <label>วันที่หมดอายุ:</label>
+                <input type="date" id="expDate">
+            </div>
+            <div class="input-group" style="flex: 1;">
+                <label>จำนวน (ดวง):</label>
+                <input type="number" id="labelQty" value="50" min="1">
+            </div>
+        </div>
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <button class="btn btn-add" id="btnAdd" style="flex: 1;" onclick="addOrUpdateDate()">+ เพิ่ม</button>
+            <button class="btn btn-clear" id="btnCancelEdit" style="display: none; flex: 1; float: none; font-size: 14px; height: 35px; margin: 0;" onclick="cancelEdit()">ยกเลิก</button>
+        </div>
+
+        <div class="list-container" id="dateListContainer">
+            <button class="btn-clear" onclick="clearList()">ล้างทั้งหมด</button>
+            <div style="margin-bottom: 10px; font-weight: bold; font-size: 13px; color: #24A0ED;">รายการที่สร้าง:</div>
+            <div id="dateItems">
+                <div style="color: #999; font-size: 12px; font-style: italic;">(ยังไม่มีรายการ)</div>
+            </div>
+        </div>
+
+        <button class="btn btn-generate" onclick="generateLabels()">สร้างตาราง</button>
+        
+        <div class="action-row">
+            <button id="btnSavePNG" class="btn btn-export" onclick="downloadPNG()" style="background: #24A0ED;">บันทึกเป็น PNG</button>
+            <button id="btnSavePDF" class="btn btn-export btn-pdf" onclick="downloadPDF()">บันทึกเป็น PDF</button>
+        </div>
+
+        <p style="font-size: 11px; color: #888; margin-top: 20px; line-height: 1.4;">
+            * เวลาสั่งพิมพ์ให้เลือก Actual Size (100%)
+        </p>
+    </div>
+
+    <div class="preview-area" id="printArea">
+        <div style="color: #bbb; margin: auto; font-size: 18px; text-align: center;">
+            <div style="font-size: 40px; margin-bottom: 10px;">📄</div>
+            ตัวอย่างกระดาษ A4 จะแสดงที่นี่<br>
+            <span style="font-size: 14px;">(กรุณาเพิ่มรายการและกดสร้างตาราง)</span>
+        </div>
+    </div>
+
+    <script>
+        let dateEntries = [];
+        let editingIndex = -1;
+        const MAX_PER_PAGE = 320; 
+
+        function saveData() { localStorage.setItem('savedLabelEntries_v5', JSON.stringify(dateEntries)); }
+        function loadData() {
+            const savedData = localStorage.getItem('savedLabelEntries_v5');
+            if (savedData) { dateEntries = JSON.parse(savedData); updateListUI(); }
+        }
+
+        function addOrUpdateDate() {
+            const dateInput = document.getElementById('expDate').value;
+            const qty = parseInt(document.getElementById('labelQty').value);
+
+            if (!dateInput || isNaN(qty) || qty < 1) {
+                alert('กรุณาเลือกวันที่และใส่จำนวนให้ถูกต้อง');
+                return;
+            }
+
+            const dateParts = dateInput.split('-');
+            const year = (parseInt(dateParts[0]) + 543).toString().slice(-2);
+            const formattedDate = `${dateParts[2]}/${dateParts[1]}/${year}`;
+
+            const newEntry = { originalDate: dateInput, dateStr: formattedDate, qty: qty };
+
+            if (editingIndex > -1) {
+                dateEntries[editingIndex] = newEntry;
+                cancelEdit();
+            } else {
+                dateEntries.push(newEntry);
+            }
+            
+            updateListUI();
+            saveData(); 
+        }
+
+        function editItem(index) {
+            const entry = dateEntries[index];
+            document.getElementById('expDate').value = entry.originalDate;
+            document.getElementById('labelQty').value = entry.qty;
+            editingIndex = index;
+            
+            const btnAdd = document.getElementById('btnAdd');
+            btnAdd.innerText = "บันทึก";
+            btnAdd.style.backgroundColor = "#ffc107";
+            btnAdd.style.color = "#000";
+
+            document.getElementById('btnCancelEdit').style.display = "block";
+        }
+
+        function cancelEdit() {
+            editingIndex = -1;
+            const btnAdd = document.getElementById('btnAdd');
+            btnAdd.innerText = "+ เพิ่ม";
+            btnAdd.style.backgroundColor = "#007bff";
+            btnAdd.style.color = "#fff";
+            
+            document.getElementById('btnCancelEdit').style.display = "none";
+            document.getElementById('expDate').value = ""; 
+            document.getElementById('labelQty').value = "50"; 
+        }
+
+        function deleteItem(index) {
+            if(confirm('ต้องการลบรายการนี้ใช่หรือไม่?')) {
+                dateEntries.splice(index, 1);
+                if (editingIndex === index) cancelEdit();
+                else if (editingIndex > index) editingIndex--;
+                updateListUI();
+                saveData(); 
+            }
+        }
+
+        function updateListUI() {
+            const container = document.getElementById('dateItems');
+            container.innerHTML = ''; 
+
+            if (dateEntries.length === 0) {
+                container.innerHTML = '<div style="color: #999; font-size: 12px; font-style: italic;">(ยังไม่มีรายการ)</div>';
+                return;
+            }
+
+            let totalQty = 0;
+            dateEntries.forEach((entry, index) => {
+                totalQty += entry.qty;
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.innerHTML = `
+                    <div class="item-text"><b>${entry.dateStr}</b> <span style="color:#888;">(${entry.qty} ดวง)</span></div>
+                    <div class="item-actions">
+                        <button class="btn-small btn-edit" onclick="editItem(${index})">✏️</button>
+                        <button class="btn-small btn-delete" onclick="deleteItem(${index})">❌</button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            const totalDiv = document.createElement('div');
+            totalDiv.style.cssText = 'margin-top: 12px; padding-top: 10px; border-top: 1px solid #ddd; font-weight: bold; color: #28a745; font-size: 13px; text-align: center; font-family: sans-serif;';
+            totalDiv.innerHTML = `รวมทั้งหมด: ${totalQty} ดวง (${Math.ceil(totalQty / MAX_PER_PAGE)} แผ่น)`;
+            container.appendChild(totalDiv);
+        }
+
+        function clearList() {
+            if(confirm('ต้องการล้างรายการทั้งหมดเลยใช่ไหม?')) {
+                dateEntries = [];
+                cancelEdit();
+                updateListUI();
+                document.getElementById('printArea').innerHTML = `
+                    <div style="color: #bbb; margin: auto; font-size: 18px; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">📄</div>
+                        ตัวอย่างกระดาษ A4 จะแสดงที่นี่<br>
+                        <span style="font-size: 14px;">(กรุณาเพิ่มรายการและกดสร้างตาราง)</span>
+                    </div>
+                `;
+                toggleExportButtons(false);
+                saveData(); 
+            }
+        }
+
+        function toggleExportButtons(show) {
+            document.getElementById('btnSavePNG').classList.toggle('show', show);
+            document.getElementById('btnSavePDF').classList.toggle('show', show);
+        }
+
+        function generateLabels() {
+            const printArea = document.getElementById('printArea');
+            printArea.innerHTML = ''; 
+
+            if (dateEntries.length === 0) {
+                alert('กรุณาเพิ่มรายการก่อนสร้างตาราง');
+                printArea.innerHTML = `
+                    <div style="color: #bbb; margin: auto; font-size: 18px; text-align: center;">
+                        <div style="font-size: 40px; margin-bottom: 10px;">📄</div>
+                        ตัวอย่างกระดาษ A4 จะแสดงที่นี่<br>
+                        <span style="font-size: 14px;">(กรุณาเพิ่มรายการและกดสร้างตาราง)</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let allLabels = [];
+            dateEntries.forEach(entry => {
+                for(let i = 0; i < entry.qty; i++) {
+                    allLabels.push(entry.dateStr);
+                }
+            });
+
+            const totalPages = Math.ceil(allLabels.length / MAX_PER_PAGE);
+
+            for (let p = 0; p < totalPages; p++) {
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'page';
+                pageDiv.id = `a4-page-${p+1}`; 
+
+                const startIdx = p * MAX_PER_PAGE;
+                const endIdx = startIdx + MAX_PER_PAGE;
+                const labelsForThisPage = allLabels.slice(startIdx, endIdx);
+
+                labelsForThisPage.forEach(dateStr => {
+                    const labelDiv = document.createElement('div');
+                    labelDiv.className = 'label';
+                    labelDiv.innerHTML = `<div class="exp-text">EXP :</div><div class="date-text">${dateStr}</div>`;
+                    pageDiv.appendChild(labelDiv);
+                });
+
+                printArea.appendChild(pageDiv);
+            }
+            
+            // บนมือถือ ให้เลื่อนหน้าจอลงมาตรงตารางพรีวิวพอดีหลังจากกดสร้าง
+            printArea.scrollIntoView({ behavior: 'smooth' });
+            toggleExportButtons(true);
+        }
+
+        async function downloadPNG() {
+            const pages = document.querySelectorAll('.page');
+            const btnPNG = document.getElementById('btnSavePNG');
+            const originalText = btnPNG.innerText;
+            btnPNG.innerText = "กำลังสร้างภาพ...";
+            
+            for (let i = 0; i < pages.length; i++) {
+                const canvas = await html2canvas(pages[i], { scale: 3, useCORS: true });
+                const link = document.createElement('a');
+                link.download = `Labels_Page_${i+1}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            }
+            btnPNG.innerText = originalText;
+        }
+
+        async function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pages = document.querySelectorAll('.page');
+            
+            const btnPDF = document.getElementById('btnSavePDF');
+            const originalText = btnPDF.innerText;
+            btnPDF.innerText = "กำลังจัดทำ PDF...";
+
+            for (let i = 0; i < pages.length; i++) {
+                const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true });
+                const imgData = canvas.toDataURL('image/jpeg', 1.0); 
+
+                pdf.addImage(imgData, 'JPEG', 5, 4.5, 200, 288);
+
+                if (i < pages.length - 1) {
+                    pdf.addPage();
+                }
+            }
+
+            pdf.save('Labels_A4.pdf');
+            btnPDF.innerText = originalText;
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
